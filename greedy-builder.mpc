@@ -1,0 +1,41 @@
+program.use_edabit(True)
+sfix.round_nearest = True
+cfix.set_precision(f=8, k=34)
+sfix.set_precision(f=8, k=34)
+
+class Tx:
+    def __init__(self, id, fee, gas):
+        self.id = id
+        self.fee = fee
+        self.gas = gas
+        self.rep = sfix.Array(3)
+        self.rep.assign([id, fee, gas])
+
+
+class Builder:
+    def __init__(self, txs):
+        self.txs = txs
+
+"""
+Runs the greedy mpc builder algorithm for the following optimization program:
+max \sum(fee_ix_i)
+subject to
+\sumx_ig_i <= max_block_gas_limit
+x_i + x_j <= C_ij where C_ij = 1 if x_i and x_j conflict or 2 otherwise
+2x_j - x_i <= M_ij where M_ij = 1 if x_j depends on x_i or 2 otherwise
+
+builders: List[Builder]
+max_block_gas_limit: cfix
+K_c: set of transactions such that C_ij = 1
+K_m: set of transactions such that M_ij = 1
+
+"""
+
+def greedy_mpc_builder(builders, max_block_gas_limit, K_c, K_m):
+    transactions = sfix.Matrix(9, 3)
+    counter = 0
+    for builder in builders:
+        for tx in builder.txs:
+            transactions[counter].assign(tx.rep)
+            counter += 1
+
